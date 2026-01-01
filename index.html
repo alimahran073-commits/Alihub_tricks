@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ali Hub - منصه الضريبه العشيره</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700&display=swap');
+        
+        * {
+            font-family: 'Tajawal', sans-serif;
+        }
+        
+        .video-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .video-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        .upload-area {
+            border: 3px dashed #4f46e5;
+            transition: all 0.3s ease;
+        }
+        
+        .upload-area:hover {
+            border-color: #6366f1;
+            background: rgba(99, 102, 241, 0.05);
+        }
+        
+        .upload-area.dragover {
+            border-color: #22c55e;
+            background: rgba(34, 197, 94, 0.1);
+        }
+
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.8);
+        }
+
+        .modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .video-thumbnail {
+            position: relative;
+            padding-bottom: 56.25%;
+            height: 0;
+            overflow: hidden;
+        }
+
+        .video-thumbnail video {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .play-overlay {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 60px;
+            height: 60px;
+            background: rgba(0,0,0,0.7);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .play-overlay:hover {
+            background: rgba(0,0,0,0.9);
+            transform: translate(-50%, -50%) scale(1.1);
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            background: #22c55e;
+            color: white;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s ease;
+            z-index: 2000;
+        }
+
+        .toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .admin-badge {
+            background: linear-gradient(135deg, #f59e0b, #dc2626);
+            color: white;
+            padding: 2px 12px;
+            border-radius: 12px;
+            font-size: 0.875rem;
+            font-weight: bold;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.8;
+            }
+        }
+
+        .locked-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 0.5rem;
+            z-index: 10;
+        }
+
+        .login-form {
+            background: white;
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 400px;
+            width: 100%;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Header -->
+    <header class="gradient-bg shadow-lg">
+        <div class="container mx-auto px-4 py-6">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center space-x-reverse space-x-3">
+                    <svg class="w-10 h-10 text-white" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M2 6a2 2 0 012-2h6a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6zM14.553 7.106A1 1 0 0014 8v4a1 1 0 00.553.894l2 1A1 1 0 0018 13V7a1 1 0 00-1.447-.894l-2 1z"></path>
+                    </svg>
+                    <h1 class="text-3xl font-bold text-white">Ali Hub</h1>
+                    <div id="adminBadge" class="admin-badge hidden">أدمن</div>
+                </div>
+                <nav class="flex items-center space-x-reverse space-x-6">
+                    <a href="#" class="text-white hover:text-gray-200 transition">الرئيسية</a>
+                    <a href="#videos" class="text-white hover:text-gray-200 transition">الفيديوهات</a>
+                    <a href="#upload" class="text-white hover:text-gray-200 transition">رفع فيديو</a>
+                    <button id="adminBtn" onclick="toggleAdminLogin()" class="bg-white/20 text-white px-4 py-2 rounded-lg hover:bg-white/30 transition flex items-center">
+                        <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                        </svg>
+                        <span id="adminBtnText">دخول الأدمن</span>
+                    </button>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="bg-gradient-to-r from-purple-500 to-indigo-600 text-white py-20">
+        <div class="container mx-auto px-4 text-center">
+            <h2 class="text-5xl font-bold mb-6">مرحباً بك في Ali Hub</h2>
+            <p class="text-xl mb-8">اهلا بك في اقوي موقع لحزب الضريبه</p>
+            <button onclick="scrollToUpload()" class="bg-white text-indigo-600 px-8 py-3 rounded-full font-bold hover:bg-gray-100 transition transform hover:scale-105">
+                ابدأ الآن
+            </button>
+        </div>
+    </section>
+
+    <!-- Upload Section -->
+    <section id="upload" class="container mx-auto px-4 py-12">
+        <h2 class="text-3xl font-bold text-center mb-8 text-gray-800">رفع فيديو جديد</h2>
+        <div class="max-w-2xl mx-auto relative">
+            <div id="uploadContainer" class="relative">
+                <!-- Locked Overlay -->
+                <div id="uploadLocked" class="locked-overlay">
+                    <div class="text-center">
+                        <svg class="w-16 h-16 mx-auto mb-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                        </svg>
+                        <h3 class="text-xl font-bold text-white mb-2">منطقة محمية</h3>
+                        <p class="text-gray-300 mb-4">يجب تسجيل الدخول كأدمن لرفع الفيديوهات</p>
+                        <button onclick="toggleAdminLogin()" class="bg-white text-indigo-600 px-6 py-2 rounded-lg font-bold hover:bg-gray-100 transition">
+                            تسجيل الدخول
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Upload Area -->
+                <div class="upload-area bg-white rounded-lg p-12 text-center cursor-pointer" id="uploadArea">
+                    <svg class="w-20 h-20 mx-auto mb-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                    </svg>
+                    <h3 class="text-xl font-semibold mb-2 text-gray-700">اسحب الفيديو هنا أو انقر للاختيار</h3>
+                    <p class="text-gray-500">MP4, AVI, MOV (حتى 100MB)</p>
+                    <input type="file" id="fileInput" accept="video/*" class="hidden">
+                </div>
+            </div>
+            
+            <div id="uploadProgress" class="mt-6 hidden">
+                <div class="bg-gray-200 rounded-full h-4 overflow-hidden">
+                    <div id="progressBar" class="bg-gradient-to-r from-indigo-500 to-purple-500 h-full transition-all duration-300" style="width: 0%"></div>
+                </div>
+                <p class="text-center mt-2 text-gray-600">جاري الرفع... <span id="progressText">0%</span></p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Videos Grid -->
+    <section id="videos" class="container mx-auto px-4 py-12">
+        <h2 class="text-3xl font-bold text-center mb-8 text-gray-800">الفيديوهات المرفوعة</h2>
+        <div id="videosGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- Videos will be dynamically added here -->
+        </div>
+        
+        <div id="noVideos" class="text-center py-12">
+            <svg class="w-24 h-24 mx-auto mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+            </svg>
+            <p class="text-xl text-gray-500">لا توجد فيديوهات حتى الآن</p>
+            <p class="text-gray-400 mt-2">ابدأ برفع أول فيديو لك!</p>
+        </div>
+    </section>
+
+    <!-- Video Modal -->
+    <div id="videoModal" class="modal">
+        <div class="bg-white rounded-lg p-6 max-w-4xl w-full mx-4">
+            <div class="flex justify-between items-center mb-4">
+                <h3 id="modalTitle" class="text-2xl font-bold"></h3>
+                <button onclick="closeModal()" class="text-gray-500 hover:text-gray-700">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            <video id="modalVideo" controls class="w-full rounded-lg"></video>
+            <div class="mt-4 flex justify-between items-center">
+                <button onclick="shareVideo()" class="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 transition flex items-center">
+                    <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m9.032 4.026a9.001 9.001 0 01-7.432 0m9.032-4.026A9.001 9.001 0 0112 3c-4.474 0-8.268 3.12-9.032 7.326m0 0A9.001 9.001 0 0012 21c4.474 0 8.268-3.12 9.032-7.326"></path>
+                    </svg>
+                    مشاركة
+                </button>
+                <button id="deleteBtn" onclick="deleteVideo()" class="bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700 transition flex items-center hidden">
+                    <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                    </svg>
+                    حذف
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Login Modal -->
+    <div id="adminModal" class="modal">
+        <div class="login-form">
+            <div class="text-center mb-6">
+                <svg class="w-16 h-16 mx-auto mb-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                </svg>
+                <h2 class="text-2xl font-bold text-gray-800">دخول الأدمن</h2>
+                <p class="text-gray-600 mt-2">أدخل كلمة المرور للوصول إلى صلاحيات الأدمن</p>
+            </div>
+            
+            <form onsubmit="handleAdminLogin(event)">
+                <div class="mb-4">
+                    <label class="block text-gray-700 text-sm font-bold mb-2">كلمة المرور</label>
+                    <input type="password" id="adminPassword" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-500" placeholder="أدخل كلمة المرور">
+                </div>
+                
+                <div id="loginError" class="text-red-500 text-sm mb-4 hidden">كلمة المرور غير صحيحة!</div>
+                
+                <div class="flex gap-3">
+                    <button type="submit" class="flex-1 bg-indigo-600 text-white py-3 rounded-lg hover:bg-indigo-700 transition font-bold">
+                        تسجيل الدخول
+                    </button>
+                    <button type="button" onclick="closeAdminModal()" class="flex-1 bg-gray-300 text-gray-700 py-3 rounded-lg hover:bg-gray-400 transition font-bold">
+                        إلغاء
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast"></div>
+
+    <script>
+        // Admin password
+        const ADMIN_PASSWORD = 'alizbo';
+        
+        // Storage for videos and admin status
+        let videos = JSON.parse(localStorage.getItem('aliHubVideos')) || [];
+        let currentVideoIndex = null;
+        let isAdmin = sessionStorage.getItem('isAdmin') === 'true';
+
+        // DOM Elements
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const uploadProgress = document.getElementById('uploadProgress');
+        const progressBar = document.getElementById('progressBar');
+        const progressText = document.getElementById('progressText');
+        const videosGrid = document.getElementById('videosGrid');
+        const noVideos = document.getElementById('noVideos');
+        const videoModal = document.getElementById('videoModal');
+        const modalVideo = document.getElementById('modalVideo');
+        const modalTitle = document.getElementById('modalTitle');
+        const toast = document.getElementById('toast');
+        const adminModal = document.getElementById('adminModal');
+        const adminPassword = document.getElementById('adminPassword');
+        const loginError = document.getElementById('loginError');
+        const uploadLocked = document.getElementById('uploadLocked');
+        const adminBadge = document.getElementById('adminBadge');
+        const adminBtn = document.getElementById('adminBtn');
+        const adminBtnText = document.getElementById('adminBtnText');
+        const deleteBtn = document.getElementById('deleteBtn');
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            renderVideos();
+            updateAdminUI();
+        });
+
+        // Update UI based on admin status
+        function updateAdminUI() {
+            if (isAdmin) {
+                uploadLocked.style.display = 'none';
+                adminBadge.classList.remove('hidden');
+                adminBtnText.textContent = 'خروج';
+                deleteBtn.classList.remove('hidden');
+            } else {
+                uploadLocked.style.display = 'flex';
+                adminBadge.classList.add('hidden');
+                adminBtnText.textContent = 'دخول الأدمن';
+                deleteBtn.classList.add('hidden');
+            }
+        }
+
+        // Toggle admin login modal
+        function toggleAdminLogin() {
+            if (isAdmin) {
+                // Logout
+                isAdmin = false;
+                sessionStorage.removeItem('isAdmin');
+                updateAdminUI();
+                showToast('تم تسجيل الخروج بنجاح', 'success');
+            } else {
+                // Show login modal
+                adminModal.classList.add('active');
+                adminPassword.value = '';
+                loginError.classList.add('hidden');
+            }
+        }
+
+        // Close admin modal
+        function closeAdminModal() {
+            adminModal.classList.remove('active');
+            adminPassword.value = '';
+            loginError.classList.add('hidden');
+        }
+
+        // Handle admin login
+        function handleAdminLogin(event) {
+            event.preventDefault();
+            
+            if (adminPassword.value === ADMIN_PASSWORD) {
+                isAdmin = true;
+                sessionStorage.setItem('isAdmin', 'true');
+                updateAdminUI();
+                closeAdminModal();
+                showToast('تم تسجيل الدخول بنجاح كأدمن!', 'success');
+            } else {
+                loginError.classList.remove('hidden');
+                adminPassword.value = '';
+            }
+        }
+
+        // Upload area click
+        uploadArea.addEventListener('click', () => {
+            if (isAdmin) {
+                fileInput.click();
+            }
+        });
+
+        // File input change
+        fileInput.addEventListener('change', (e) => {
+            if (!isAdmin) return;
+            const file = e.target.files[0];
+            if (file) {
+                handleFileUpload(file);
+            }
+        });
+
+        // Drag and drop
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            if (isAdmin) {
+                uploadArea.classList.add('dragover');
+            }
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            if (!isAdmin) return;
+            const file = e.dataTransfer.files[0];
+            if (file && file.type.startsWith('video/')) {
+                handleFileUpload(file);
+            }
+        });
+
+        // Handle file upload
+        function handleFileUpload(file) {
+            if (!isAdmin) {
+                showToast('يجب تسجيل الدخول كأدمن لرفع الفيديوهات!', 'error');
+                return;
+            }
+
+            if (file.size > 100 * 1024 * 1024) {
+                showToast('حجم الفيديو كبير جداً! الحد الأقصى 100MB', 'error');
+                return;
+            }
+
+            uploadProgress.classList.remove('hidden');
+            
+            // Simulate upload progress
+            let progress = 0;
+            const interval = setInterval(() => {
+                progress += 10;
+                progressBar.style.width = progress + '%';
+                progressText.textContent = progress + '%';
+                
+                if (progress >= 100) {
+                    clearInterval(interval);
+                    
+                    // Read file and store
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        const video = {
+                            id: Date.now(),
+                            name: file.name,
+                            url: e.target.result,
+                            date: new Date().toLocaleDateString('ar-SA'),
+                            size: formatFileSize(file.size),
+                            uploadedBy: 'Admin'
+                        };
+                        
+                        videos.unshift(video);
+                        localStorage.setItem('aliHubVideos', JSON.stringify(videos));
+                        
+                        renderVideos();
+                        showToast('تم رفع الفيديو بنجاح!', 'success');
+                        
+                        // Reset upload area
+                        setTimeout(() => {
+                            uploadProgress.classList.add('hidden');
+                            progressBar.style.width = '0%';
+                            progressText.textContent = '0%';
+                            fileInput.value = '';
+                        }, 1000);
+                    };
+                    reader.readAsDataURL(file);
+                }
+            }, 200);
+        }
+
+        // Render videos
+        function renderVideos() {
+            if (videos.length === 0) {
+                noVideos.style.display = 'block';
+                videosGrid.style.display = 'none';
+            } else {
+                noVideos.style.display = 'none';
+                videosGrid.style.display = 'grid';
+                videosGrid.innerHTML = videos.map((video, index) => `
+                    <div class="video-card bg-white rounded-lg shadow-lg overflow-hidden cursor-pointer" onclick="openVideo(${index})">
+                        <div class="video-thumbnail">
+                            <video src="${video.url}" muted></video>
+                            <div class="play-overlay">
+                                <svg class="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M6.3 2.841A1.5 1.5 0 004 4.11v11.78a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"></path>
+                                </svg>
+                            </div>
+                        </div>
+                        <div class="p-4">
+                            <h3 class="font-semibold text-lg text-gray-800 truncate">${video.name}</h3>
+                            <div class="flex justify-between items-center mt-2 text-sm text-gray-500">
+                                <span>${video.date}</span>
+                                <span>${video.size}</span>
+                            </div>
+                            ${video.uploadedBy ? `
+                                <div class="mt-2">
+                                    <span class="text-xs bg-indigo-100 text-indigo-600 px-2 py-1 rounded-full font-semibold">
+                                        رفع بواسطة: ${video.uploadedBy}
+                                    </span>
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                `).join('');
+            }
+        }
+
+        // Open video modal
+        function openVideo(index) {
+            currentVideoIndex = index;
+            const video = videos[index];
+            modalTitle.textContent = video.name;
+            modalVideo.src = video.url;
+            videoModal.classList.add('active');
+            
+            // Show/hide delete button based on admin status
+            if (isAdmin) {
+                deleteBtn.classList.remove('hidden');
+            } else {
+                deleteBtn.classList.add('hidden');
+            }
+        }
+
+        // Close modal
+        function closeModal() {
+            videoModal.classList.remove('active');
+            modalVideo.pause();
+            modalVideo.src = '';
+            currentVideoIndex = null;
+        }
+
+        // Share video
+        function shareVideo() {
+            if (currentVideoIndex !== null) {
+                const video = videos[currentVideoIndex];
+                const shareUrl = window.location.href + '#video-' + video.id;
+                
+                if (navigator.share) {
+                    navigator.share({
+                        title: video.name,
+                        text: 'شاهد هذا الفيديو على Ali Hub',
+                        url: shareUrl
+                    });
+                } else {
+                    navigator.clipboard.writeText(shareUrl);
+                    showToast('تم نسخ الرابط!', 'success');
+                }
+            }
+        }
+
+        // Delete video
+        function deleteVideo() {
+            if (!isAdmin) {
+                showToast('يجب أن تكون أدمن لحذف الفيديوهات!', 'error');
+                return;
+            }
+            
+            if (currentVideoIndex !== null) {
+                if (confirm('هل أنت متأكد من حذف هذا الفيديو؟')) {
+                    videos.splice(currentVideoIndex, 1);
+                    localStorage.setItem('aliHubVideos', JSON.stringify(videos));
+                    closeModal();
+                    renderVideos();
+                    showToast('تم حذف الفيديو', 'success');
+                }
+            }
+        }
+
+        // Scroll to upload section
+        function scrollToUpload() {
+            document.getElementById('upload').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Format file size
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+        }
+
+        // Show toast notification
+        function showToast(message, type = 'success') {
+            toast.textContent = message;
+            toast.style.background = type === 'success' ? '#22c55e' : '#ef4444';
+            toast.classList.add('show');
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        // Close modal on background click
+        videoModal.addEventListener('click', (e) => {
+            if (e.target === videoModal) {
+                closeModal();
+            }
+        });
+
+        // Close admin modal on background click
+        adminModal.addEventListener('click', (e) => {
+            if (e.target === adminModal) {
+                closeAdminModal();
+            }
+        });
+
+        // Prevent locked overlay from triggering upload
+        document.getElementById('uploadLocked').addEventListener('click', (e) => {
+            e.stopPropagation();
+        });
+    </script>
+</body>
+</html>
