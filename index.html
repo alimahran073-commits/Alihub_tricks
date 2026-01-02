@@ -474,19 +474,20 @@
     </div> <!-- End of mainContent -->
 
     <script>
-        // Firebase Configuration - استبدل هذه القيم بقيم مشروعك من Firebase
+        // Firebase Configuration - إعدادات مشروعك
         const firebaseConfig = {
             apiKey: "AIzaSyBYi2thT1kayB3q0rmV6x6rYXF4vXDj4n4",
-            authDomain: "YOUR_AUTH_DOMAIN",
+            authDomain: "alih-edc8b.firebaseapp.com",
+            databaseURL: "https://alih-edc8b-default-rtdb.firebaseio.com",
             projectId: "alih-edc8b",
             storageBucket: "alih-edc8b.firebasestorage.app",
             messagingSenderId: "450146764801",
-            appId: "1:450146764801:android:83f0fba83c1e4d94d85800"
+            appId: "1:450146764801:web:"
         };
 
         // تحقق من وجود الإعدادات
         let firebaseEnabled = false;
-        if (firebaseConfig.apiKey !== "AIzaSyDor00Dbi8geLinOc_ZPUyRG8OhISQeeiQ") {
+        if (firebaseConfig.apiKey !== "YOUR_API_KEY") {
             // Initialize Firebase
             firebase.initializeApp(firebaseConfig);
             const storage = firebase.storage();
