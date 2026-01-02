@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ali Hub - منصه الضريبه العشيره</title>
+    <title>Ali Hub - منصة مشاركة الفيديوهات</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700&display=swap');
@@ -155,11 +155,147 @@
             max-width: 400px;
             width: 100%;
         }
+
+        /* Age Verification Styles */
+        #ageVerificationScreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.5s ease;
+        }
+
+        #ageVerificationScreen.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .age-card {
+            background: white;
+            border-radius: 20px;
+            padding: 3rem;
+            max-width: 500px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 25px 60px rgba(0,0,0,0.3);
+            animation: slideUp 0.5s ease;
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .age-icon {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            margin: 0 auto 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: pulse 2s infinite;
+        }
+
+        .age-buttons {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .age-button {
+            flex: 1;
+            padding: 1rem 2rem;
+            border-radius: 10px;
+            font-weight: bold;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+        }
+
+        .age-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+
+        .age-button.yes {
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+            color: white;
+        }
+
+        .age-button.no {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white;
+        }
+
+        #mainContent {
+            display: none;
+        }
+
+        #mainContent.show {
+            display: block;
+        }
+
+        .warning-text {
+            color: #dc2626;
+            font-size: 0.875rem;
+            margin-top: 1rem;
+            padding: 0.5rem;
+            background: #fee2e2;
+            border-radius: 8px;
+        }
     </style>
 </head>
 <body class="bg-gray-50">
-    <!-- Header -->
-    <header class="gradient-bg shadow-lg">
+    <!-- Age Verification Screen -->
+    <div id="ageVerificationScreen">
+        <div class="age-card">
+            <div class="age-icon">
+                <svg class="w-16 h-16 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                </svg>
+            </div>
+            
+            <h1 class="text-3xl font-bold text-gray-800 mb-2">تحقق من العمر</h1>
+            <p class="text-xl text-gray-600 mb-4">يجب أن تكون 18 عامًا أو أكثر للدخول إلى هذا الموقع</p>
+            
+            <div class="bg-gray-100 rounded-lg p-4 mb-4">
+                <p class="text-lg font-semibold text-gray-700">هل أنت بالغ (18 سنة أو أكثر)؟</p>
+            </div>
+            
+            <div class="age-buttons">
+                <button class="age-button yes" onclick="verifyAge(true)">
+                    نعم، عمري 18+ سنة
+                </button>
+                <button class="age-button no" onclick="verifyAge(false)">
+                    لا، عمري أقل من 18
+                </button>
+            </div>
+            
+            <div class="warning-text">
+                ⚠️ هذا الموقع مخصص للبالغين فقط. يرجى الإجابة بصدق.
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content (Hidden initially) -->
+    <div id="mainContent">
+        <!-- Header -->
+        <header class="gradient-bg shadow-lg">
         <div class="container mx-auto px-4 py-6">
             <div class="flex justify-between items-center">
                 <div class="flex items-center space-x-reverse space-x-3">
@@ -188,7 +324,7 @@
     <section class="bg-gradient-to-r from-purple-500 to-indigo-600 text-white py-20">
         <div class="container mx-auto px-4 text-center">
             <h2 class="text-5xl font-bold mb-6">مرحباً بك في Ali Hub</h2>
-            <p class="text-xl mb-8">اهلا بك في اقوي موقع لحزب الضريبه</p>
+            <p class="text-xl mb-8">شارك فيديوهاتك مع العالم بكل سهولة</p>
             <button onclick="scrollToUpload()" class="bg-white text-indigo-600 px-8 py-3 rounded-full font-bold hover:bg-gray-100 transition transform hover:scale-105">
                 ابدأ الآن
             </button>
@@ -310,10 +446,64 @@
         </div>
     </div>
 
-    <!-- Toast Notification -->
-    <div id="toast" class="toast"></div>
+        <!-- Toast Notification -->
+        <div id="toast" class="toast"></div>
+    </div> <!-- End of mainContent -->
 
     <script>
+        // Age Verification Functions
+        function verifyAge(isAdult) {
+            if (isAdult) {
+                // User is 18+, allow access
+                localStorage.setItem('ageVerified', 'true');
+                localStorage.setItem('verificationDate', new Date().toISOString());
+                
+                // Hide age verification screen
+                const ageScreen = document.getElementById('ageVerificationScreen');
+                ageScreen.classList.add('hidden');
+                
+                // Show main content
+                setTimeout(() => {
+                    ageScreen.style.display = 'none';
+                    document.getElementById('mainContent').classList.add('show');
+                }, 500);
+            } else {
+                // User is under 18, redirect or close
+                alert('عذراً، يجب أن تكون 18 عامًا أو أكثر للدخول إلى هذا الموقع.');
+                
+                // Try to close the window/tab
+                window.close();
+                
+                // If closing doesn't work, redirect to a safe site
+                setTimeout(() => {
+                    window.location.href = 'https://www.google.com';
+                }, 1000);
+            }
+        }
+
+        // Check age verification on page load
+        window.addEventListener('load', () => {
+            const ageVerified = localStorage.getItem('ageVerified');
+            const verificationDate = localStorage.getItem('verificationDate');
+            
+            if (ageVerified === 'true' && verificationDate) {
+                // Check if verification is still valid (24 hours)
+                const verifiedTime = new Date(verificationDate);
+                const now = new Date();
+                const hoursDiff = (now - verifiedTime) / (1000 * 60 * 60);
+                
+                if (hoursDiff < 24) {
+                    // Still valid, show content directly
+                    document.getElementById('ageVerificationScreen').style.display = 'none';
+                    document.getElementById('mainContent').classList.add('show');
+                } else {
+                    // Expired, need to verify again
+                    localStorage.removeItem('ageVerified');
+                    localStorage.removeItem('verificationDate');
+                }
+            }
+        });
+
         // Admin password
         const ADMIN_PASSWORD = 'alizbo';
         
